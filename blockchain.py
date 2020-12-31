@@ -165,7 +165,3 @@ def full_chain():
 
 if __name__ == '__main__':
     app.run(host='localhost', port=5000)
-
-
-
-{"chain":[{"index":1,"previous_hash":1,"proof":100,"timestamp":1609395990.8798,"transactions":[]},{"index":2,"previous_hash":"c13bc94329551b5457313f4754c3e1a19d782bdf69d1209f3db868a0ae32489f","proof":35293,"timestamp":1609396010.814421,"transactions":[{"amount":1,"recipient":"91a9d382fe744c46921db6346af6cc28","sender":0}]},{"index":3,"previous_hash":"4bae36d164a23477c4a53f82d4678d96b538eaa9cb170d584288e7fb0fe4159a","proof":35089,"timestamp":1609396051.359301,"transactions":[{"amount":1,"recipient":"91a9d382fe744c46921db6346af6cc28","sender":0}]},{"index":4,"previous_hash":"7871eea94f8ffb82d6a80caf81358aecd31282887ee2f0c6311f154518670cdb","proof":119678,"timestamp":1609396053.4126348,"transactions":[{"amount":1,"recipient":"91a9d382fe744c46921db6346af6cc28","sender":0}]}],"length":4}
