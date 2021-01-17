@@ -7,14 +7,76 @@ from uuid import uuid4
 
 from flask import Flask, jsonify, request
 
+from urllib.parse import urlparse
+
 
 class BlockChain ():
     def __init__(self):
         self.chain = []
         self.current_transactions = []
-
+        self.nodes = set()
         # Create the genesis block (first block in the chain)
         self.new_block(previous_hash=1, proof=100)
+
+    def register_new_node(self, address):
+        """
+        Register a new node so it can be added to the decentrilized network.
+        :param: addreess: <str> Address of node. ex: 'http://192.134.0.7:8000'
+        :return: None
+        """
+        parsed_url = urlparse(address)
+        self.nodes.add(parsed_url.netloc)
+
+    def is_valid_chain(self, chain):
+        """
+        Determine if a given blockchain is valid (all the blocks were made and linked in order)
+        :param chain: <list> a blockchain
+        :return: <bool> True if valid, False otherwise
+        """
+        last_block = chain[0]
+        for current_index in range(1, len(chain)):
+            block = chain[current_index]
+            print(f'{last_block}')
+            print(f'{block}')
+            print(f'==============')
+            # check that the hast of the block is correct
+            if block['previous_hash'] != self.hash(last_block):
+                return False
+
+            # check that the proof of work is correct
+            if not self.valid_proof(last_block['proof'], block['proof']):
+                return False
+
+            last_block = block
+
+        return True
+
+    def resolve_conflicts(self):
+        """
+        This is the CONSENSUS ALGORITHM. It resolves conflicts by 
+        replacing our chain with the longest one in the network.
+        :return: <bool> True if our chain was replaced, False if not
+        """
+        neighbours = self.nodes
+        new_chain = None
+        # We're only looking for chains longer than ours
+        max_lenght = len(self.chain)
+
+        # Get the other chains in the network and verify they are valid
+        for node in neighbours:
+            respose = requests.get(f'http//{node}/chain')
+            if respose.status_code == 200:
+                lenght = respose.json()['length']
+                chain = respose.json()['chain']
+
+                # check if the length is longer and the chain is valid
+                if lenght > max_lenght and self.is_valid_chain(chain):
+                    max_length = length
+                    new_chain = chain
+        if new_chain:
+            self.chain = new_chain
+            return True
+        return False
 
     def new_block(self, proof, previous_hash=None):
         """
@@ -167,5 +229,35 @@ if __name__ == '__main__':
     app.run(host='localhost', port=5000)
 
 
+@app.route("/nodes/register", methods=["POST"])
+def register_nodes():
+    values = request.get_json()
+    nodes = values.get['nodes']
+    if nodes is None:
+        return "Error: Please supply a valid list of nodes" 400
 
-{"chain":[{"index":1,"previous_hash":1,"proof":100,"timestamp":1609395990.8798,"transactions":[]},{"index":2,"previous_hash":"c13bc94329551b5457313f4754c3e1a19d782bdf69d1209f3db868a0ae32489f","proof":35293,"timestamp":1609396010.814421,"transactions":[{"amount":1,"recipient":"91a9d382fe744c46921db6346af6cc28","sender":0}]},{"index":3,"previous_hash":"4bae36d164a23477c4a53f82d4678d96b538eaa9cb170d584288e7fb0fe4159a","proof":35089,"timestamp":1609396051.359301,"transactions":[{"amount":1,"recipient":"91a9d382fe744c46921db6346af6cc28","sender":0}]},{"index":4,"previous_hash":"7871eea94f8ffb82d6a80caf81358aecd31282887ee2f0c6311f154518670cdb","proof":119678,"timestamp":1609396053.4126348,"transactions":[{"amount":1,"recipient":"91a9d382fe744c46921db6346af6cc28","sender":0}]}],"length":4}
+    for node in nodes:
+        blockchain.register_new_node(node)
+
+    response = {
+        'message': 'New nodes have been added',
+        'total_ndes': list(blockchain.nodes)
+    }
+    return jsonify(response) 201
+
+
+@app.route('/nodes/resolve', methods=['GET'])
+def consensus():
+    replaced = blockchain.resolve_conflicts()
+
+    if replaced:
+        response = {
+            'message': 'Our chain was replaced',
+            'new_chain': blockchain.chain
+        }
+    else:
+        response = {
+            'message': 'Our chain is authoritative',
+            'chain': blockchain.chain
+        }
+    return jsonify(response), 200
