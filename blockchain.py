@@ -260,4 +260,7 @@ def consensus():
             'message': 'Our chain is authoritative',
             'chain': blockchain.chain
         }
+<<<<<<< HEAD
     return jsonify(response), 200
+=======
+>>>>>>> 7eb08d4dbd6391762d6297a205e43a3f4ecdc9fb
